@@ -9,8 +9,8 @@ A Streamlit web application for classifying aerial photographs using a pre-train
 - [Setup and Installation](#setup-and-installation)
 - [Configuration](#configuration)
 - [Running the Application](#running-the-application)
-- [Project Structure (Optional)](#project-structure-optional)
-- [Troubleshooting (Optional)](#troubleshooting-optional)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
 
 ## Features
 * Upload aerial images (JPG, JPEG, PNG).
