@@ -62,24 +62,15 @@ Follow these steps to set up the project locally:
     ```
 
 4.  **Download the Pre-trained Model:**
-    * **Option A: If the model is included in the repository:**
-        The model file (e.g., `your_model.h5`) should already be in the project directory. Ensure it's in the correct path referenced by the application (e.g., root folder or a `models/` subfolder).
-
-    * **Option B: If the model needs to be downloaded separately (e.g., due to size):**
-        Download the pre-trained model file (e.g., `your_model.h5`) from:
-        [**<< INSERT LINK TO YOUR MODEL FILE HERE >>**] *(e.g., Google Drive, Dropbox, GitHub Releases, etc.)*
-
-        Place the downloaded model file (e.g., `your_model.h5`) into the root directory of this project, or update the `MODEL_PATH` variable in `app.py` (or your main script) to point to its location.
+    *  The model file = should already be in the project directory. Ensure it's in the correct path referenced by the application (e.g., root folder or a `models/` subfolder).
+    *  Place the downloaded model file into the root directory of this project, or update the `MODEL_PATH` variable in `app.py` (or your main script) to point to its location.
 
 ## Configuration
 Before running the application, you might want to check or adjust the following configurations within your main Streamlit Python script (e.g., `app.py`):
 
 * `MODEL_PATH`: Ensure this variable points to the correct path of your `.h5` model file.
-    * Example: `MODEL_PATH = 'your_model.h5'`
 * `IMG_HEIGHT` and `IMG_WIDTH`: These should match the expected input dimensions of your pre-trained model.
-    * Example: `IMG_HEIGHT = 224`, `IMG_WIDTH = 224`
 * `CLASS_NAMES`: This list should contain the names of the classes your model predicts, in the correct order.
-    * Example: `CLASS_NAMES = ['Forest', 'Urban', 'Water', 'Agricultural']`
 
 ## Running the Application
 
