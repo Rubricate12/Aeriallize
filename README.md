@@ -95,7 +95,7 @@ Once the setup and configuration are complete:
 
 4.  The application should automatically open in your default web browser. If not, navigate to the local URL displayed in the terminal (usually `http://localhost:8501`).
 
-## Project Structure (Optional)
+## Project Structure
 A brief overview of the key files and directories:
 ├── app.py                # Main Streamlit application script
 ├── your_model.h5         # Pre-trained model file (if included or where to place it)
@@ -105,7 +105,7 @@ A brief overview of the key files and directories:
 └── ...                   # Other project files or notebooks
 
 
-## Troubleshooting (Optional)
+## Troubleshooting
 * **Model Loading Error:**
     * Ensure the `MODEL_PATH` in `app.py` is correct and the `.h5` file is present at that location.
     * Verify that your TensorFlow/Keras version is compatible with the version used to save the model (see previous discussions on TF version mismatches if this occurs).
