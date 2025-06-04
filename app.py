@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 import cv2
 
-
+st.set_page_config(layout="wide")
 MODEL_PATH = 'modelfinal.h5' # Path to your .h5 model file
 IMG_HEIGHT = 224             # Expected image height by your model
 IMG_WIDTH = 224              # Expected image width by your model
@@ -115,80 +115,107 @@ def preprocess_image_for_prediction(image_pil, target_height, target_width):
     """
     Preprocesses a PIL Image for model prediction, including all necessary steps.
     """
-    # 1. Resize ke ukuran input final model menggunakan PIL
-    image_pil_resized = image_pil.resize((target_width, target_height))
+    # 1. Resize to the final model input size using PIL
+    # Using ANTIALIAS filter for better quality resizing
+    image_pil_resized = image_pil.resize((target_width, target_height), Image.Resampling.LANCZOS)
 
-    # 2. Konversi PIL Image ke NumPy array
-    image_np = np.array(image_pil_resized)
+    # 2. Convert PIL Image to NumPy array
+    # Ensure it's RGB. If it has Alpha, remove it.
+    if image_pil_resized.mode == 'RGBA':
+        image_pil_resized = image_pil_resized.convert('RGB')
+    elif image_pil_resized.mode == 'L': # Grayscale
+        image_pil_resized = image_pil_resized.convert('RGB') # Convert to RGB as MobileNetV2 expects 3 channels
 
-    # Pastikan format channel sesuai (misalnya, buang alpha channel jika ada)
-    if image_np.shape[-1] == 4: # RGBA
-        image_np = image_np[:, :, :3] # Ambil RGB saja
-    
-    # Jika model dilatih dengan gambar grayscale tapi input PIL berwarna, konversi di sini.
-    # Atau sebaliknya, jika model RGB tapi input PIL grayscale.
-    # Contoh: Jika model RGB dan input mungkin grayscale
-    if image_np.ndim == 2: # Grayscale
-        image_np = cv2.cvtColor(image_np, cv2.COLOR_GRAY2RGB) # Konversi ke RGB
+    image_np = np.array(image_pil_resized) # This will be uint8, [0, 255]
 
-    # 3. Terapkan enhancements (noise reduction, histogram equalization)
-    # Fungsi enhance_single_image menerima NumPy array (misalnya uint8) dan mengembalikan float32 NumPy
-    image_enhanced_np = enhance_single_image(image_np) # image_np harusnya sudah uint8 atau float 0-255
+    # 3. Apply enhancements (noise reduction, histogram equalization)
+    image_enhanced_np_float32 = enhance_single_image(image_np) # image_np is uint8
 
-    # 4. Konversi NumPy array hasil enhancement ke TensorFlow tensor
-    image_enhanced_tf = tf.convert_to_tensor(image_enhanced_np, dtype=tf.float32)
+    # Prepare a version for display (uint8, 0-255)
+    # Clamp values to ensure they are within 0-255 before converting to uint8
+    image_enhanced_for_display_np = np.clip(image_enhanced_np_float32, 0, 255).astype(np.uint8)
 
-    # 5. Terapkan preprocessing spesifik MobileNet
-    # Fungsi mobilenet_preprocess_single_image menerima tensor float32
+    # 4. Convert the enhanced NumPy array (float32, 0-255) to a TensorFlow tensor
+    image_enhanced_tf = tf.convert_to_tensor(image_enhanced_np_float32, dtype=tf.float32)
+
+    # 5. Apply MobileNetV2-specific preprocessing
     image_model_ready_tf = mobilenet_preprocess_single_image(image_enhanced_tf)
 
-    # 6. Tambahkan batch dimension
-    image_batch = tf.expand_dims(image_model_ready_tf, axis=0)
+    # 6. Add batch dimension (model expects a batch of images)
+    image_batch_tf = tf.expand_dims(image_model_ready_tf, axis=0)
 
-    return image_batch
+    return image_enhanced_for_display_np, image_batch_tf
 
 
-st.title("Aerial Photo Prediction")
-# ... (kode file uploader Anda) ...
-uploaded_file = st.file_uploader("Choose an aerial image...", type=["jpg", "jpeg", "png"])
+# --- Streamlit App UI ---
 
-if uploaded_file is not None and model is not None:
-    image_pil = Image.open(uploaded_file)
-    display_width = 300
-    st.image(image_pil, caption="Uploaded Image", width=display_width)
+st.title("🛰️ Aerial Scene Classification 📸")
+st.markdown("Upload an aerial image (e.g., satellite or drone footage) to classify its scene type.")
 
-    if st.button("Predict"):
-        with st.spinner("Processing and predicting..."):
-            try:
-                # Gunakan fungsi preprocessing yang sudah lengkap
-                processed_image_batch = preprocess_image_for_prediction(image_pil, IMG_HEIGHT, IMG_WIDTH)
 
-                # Lakukan prediksi
-                # Pastikan 'model' adalah instance model Keras yang sudah di-load
-                if hasattr(model, 'predict'): # Cek sederhana apakah 'model' bisa melakukan prediksi
-                    predictions = model.predict(processed_image_batch)
+col1, col2 = st.columns(2)
 
-                    # Tampilkan hasil prediksi (sesuaikan dengan output model Anda)
-                    st.subheader("Prediction Results")
-                    # Contoh untuk klasifikasi:
-                    if CLASS_NAMES and len(predictions[0]) == len(CLASS_NAMES):
-                        predicted_class_index = np.argmax(predictions[0])
-                        predicted_class_name = CLASS_NAMES[predicted_class_index]
-                        confidence = np.max(predictions[0]) * 100
-                        st.write(f"**Predicted Class:** {predicted_class_name}")
-                        st.write(f"**Confidence:** {confidence:.2f}%")
+with col1:
+    st.header("📤 Upload Image")
+    uploaded_file = st.file_uploader("Choose an aerial image...", type=["jpg", "jpeg", "png"])
+    
+    # Display original uploaded image
+    if uploaded_file is not None:
+        image_pil = Image.open(uploaded_file)
+        st.image(image_pil, caption="Original Uploaded Image", use_column_width=True)
+
+with col2:
+    st.header("⚙️ Processing & Prediction")
+    if uploaded_file is not None and model is not None:
+        if st.button("🔍 Classify Scene", type="primary", use_container_width=True):
+            with st.spinner("Analyzing image... This may take a moment."):
+                try:
+                    # Preprocess the image for display and prediction
+                    # This function now returns two images:
+                    # 1. enhanced_display_img: For showing the user the preprocessing result (uint8)
+                    # 2. model_input_batch: For feeding into the model (TensorFlow batch)
+                    enhanced_display_img, model_input_batch = preprocess_image_for_prediction(
+                        image_pil, IMG_HEIGHT, IMG_WIDTH
+                    )
+
+                    # Display the preprocessed (enhanced) image
+                    st.subheader("✨ Enhanced Image (for Model Input)")
+                    st.image(enhanced_display_img, caption="Image after Noise Reduction & Equalization", use_column_width=True)
+
+                    # Perform prediction
+                    if hasattr(model, 'predict'):
+                        predictions = model.predict(model_input_batch)
+
+                        st.subheader("📊 Prediction Results")
+                        if CLASS_NAMES and len(predictions[0]) == len(CLASS_NAMES):
+                            predicted_class_index = np.argmax(predictions[0])
+                            predicted_class_name = CLASS_NAMES[predicted_class_index]
+                            confidence = np.max(predictions[0]) * 100
+                            
+                            st.success(f"**Predicted Scene:** {predicted_class_name}")
+                            st.info(f"**Confidence:** {confidence:.2f}%")
+
+                            # Optional: Display top N predictions
+                            st.markdown("---")
+                            st.write("**Top Probabilities:**")
+                            # Get top 3 predictions
+                            top_k_indices = np.argsort(predictions[0])[::-1][:3]
+                            for i in top_k_indices:
+                                st.write(f"- {CLASS_NAMES[i]}: {predictions[0][i]*100:.2f}%")
+                        else:
+                            st.write("Raw Predictions (output shape or class names might not match):", predictions)
                     else:
-                        st.write("Raw Predictions:", predictions)
-                else:
-                    st.error("Model object does not seem to be a Keras model with a 'predict' method.")
+                        st.error("Model object is not a valid Keras model with a 'predict' method.")
 
-            except Exception as e:
-                st.error(f"An error occurred during preprocessing or prediction: {e}")
-                import traceback
-                st.error(traceback.format_exc()) # Tampilkan traceback untuk debug
-
-elif model is None:
-    st.warning("Model could not be loaded. Please check the model path and file.")
+                except Exception as e:
+                    st.error(f"An error occurred during processing or prediction: {e}")
+                    import traceback
+                    st.error(f"Traceback: {traceback.format_exc()}")
+    
+    elif model is None:
+        st.warning("Model could not be loaded. Please check the `MODEL_PATH` and ensure the weights file exists and is compatible.")
+    elif uploaded_file is None:
+        st.info("☝️ Please upload an image to start.")
 
 st.sidebar.info(
     "Ini adalah demo model untuk prediksi Citra berbagai kelas yang diambil dari udara"
