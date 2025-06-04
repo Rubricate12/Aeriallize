@@ -38,7 +38,7 @@ Follow these steps to set up the project locally:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/Rubricate12/TUBES_PCD_SKYVIEW.git](https://github.com/Rubricate12/TUBES_PCD_SKYVIEW.git)
+    git clone https://github.com/Rubricate12/TUBES_PCD_SKYVIEW.git
     cd TUBES_PCD_SKYVIEW
     ```
 
