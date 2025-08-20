@@ -1,6 +1,12 @@
 ﻿# Aeriallize Streamlit App
 
-A Streamlit web application for classifying aerial photographs using a pre-trained deep learning model. Users can upload an image, and the app will predict its category (e.g., forest, urban, water, agricultural land).
+A Streamlit web application for classifying aerial photographs using a pre-trained deep learning model. Users can upload an image, and the app will predict its category (e.g., forest, urban, water, agricultural 
+land).
+
+## Deployed Links
+
+- **Frontend (Flutter Web)**: [Steam Review Analyst](https://rubricate12.github.io/TUBES_ML/)
+- **Backend (Flask API)**: [TFLite NLP Server](https://tflite-nlp-server.onrender.com)
 
 ## Table of Contents
 - [Features](#features)
@@ -105,4 +111,5 @@ A brief overview of the key files and directories:
     * Sometimes OpenCV requires additional system libraries. If you encounter issues related to `cv2`, ensure you installed `opencv-python` or `opencv-python-headless`.
 
 ---
+
 
