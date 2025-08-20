@@ -1,4 +1,4 @@
-﻿# Aerial Photo Classification Streamlit App
+﻿# Aeriallize Streamlit App
 
 A Streamlit web application for classifying aerial photographs using a pre-trained deep learning model. Users can upload an image, and the app will predict its category (e.g., forest, urban, water, agricultural land).
 
@@ -105,3 +105,4 @@ A brief overview of the key files and directories:
     * Sometimes OpenCV requires additional system libraries. If you encounter issues related to `cv2`, ensure you installed `opencv-python` or `opencv-python-headless`.
 
 ---
+
